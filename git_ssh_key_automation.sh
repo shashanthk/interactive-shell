@@ -11,13 +11,13 @@ github_ssh_key_page="https://github.com/settings/ssh/new"
 
 username_prompt_message="Please enter your name: "
 
-# Ask for user's name
-read -p "${username_prompt_message}" username
-
 # Ensure the user enters a name
-while [[ -z "$username" ]]; do
+if [[ -n "$1" ]]; then
+    username="$1"
+else
+    # Prompt for username if not provided as an argument
     read -p "${username_prompt_message}" username
-done
+fi
 
 # Convert name to lowercase and replace spaces with underscores
 username_lowercase=$(echo "$username" | tr '[:upper:]' '[:lower:]' | tr ' ' '_')
