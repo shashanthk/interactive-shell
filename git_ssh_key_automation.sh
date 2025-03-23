@@ -99,8 +99,8 @@ cat "$ssh_config_file"
 echo "#######################################################################################################"
 
 # Display Public Key for GitHub
-printf "\nCopy and paste this key to %s\n\n" "$github_ssh_key_page"
-cat "$ssh_pub_key_file"
+printf "\nCopy and paste this key to \e[34;4m%s\e[0m\n" "$github_ssh_key_page"
+printf "\n\e[92m$(cat "$ssh_pub_key_file")\e[0m\n"
 printf "\nNow, clone repositories using:\n\ngit clone git@%s:<repo_owner_name>/<repo_name>.git\n\n" "$name_lower-github"
 
 printf "You can test the connection by running:\n\nssh -T git@%s\n\n" "$name_lower-github"
