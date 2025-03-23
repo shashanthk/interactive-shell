@@ -23,6 +23,14 @@ done
 username_lowercase=$(echo "$username" | tr '[:upper:]' '[:lower:]' | tr ' ' '_')
 name_lower=$(echo "$username_lowercase" | tr '_' '-')
 
+# Create GitHub configuration string
+github_config="# GitHub configuration\n"
+github_config+="Host ${name_lower}-github\n"
+github_config+="HostName ${github_url}\n"
+github_config+="User ${github_user}\n"
+github_config+="Port ${github_port}\n"
+github_config+="IdentityFile ~/.ssh/id_${username_lowercase}"
+
 # Check if ~/.ssh directory exists, if not create it
 if [ ! -d "$ssh_dir" ]; then
     echo "The ${ssh_dir} directory doesn't exist. Creating it..."
@@ -35,41 +43,41 @@ fi
 ssh_key_file="${ssh_dir}/id_${username_lowercase}"
 
 if [ -f "$ssh_key_file" ]; then
-    read -p "SSH key file already exists. Do you want to continue and overwrite? (y/n): " overwrite_choice
+    read -p "SSH key file already exists. Do you want to continue and overwrite? (y/n) [default: n]: " overwrite_choice
+
+    if [[ -z "$overwrite_choice" ]]; then
+        overwrite_choice="n"
+    fi
 
     if [[ "$overwrite_choice" != "y" && "$overwrite_choice" != "Y" ]]; then
         echo -e "Exiting...\n"
         exit 1
     fi
-fi
+    # If the user chooses to overwrite, generate new key, but don't append to config.
+    echo "Generating new SSH key, config will not be updated..."
+    ssh-keygen -t ed25519 -f "$ssh_key_file" -N ""
 
-# Generate SSH key
-echo "Generating SSH key..."
-ssh-keygen -t ed25519 -f "$ssh_key_file" -N ""
-
-# Check if ~/.ssh/config file exists, if not create it
-if [ ! -f "$ssh_config_file" ]; then
-    echo -e "\nCreating ${ssh_config_file} file..."
-    touch "$ssh_config_file"
 else
-    echo -e "\nThe ${ssh_config_file} already exists. Continuing with next step"
-fi
+    # Generate SSH key
+    echo "Generating SSH key..."
+    ssh-keygen -t ed25519 -f "$ssh_key_file" -N ""
 
-# Define the GitHub configuration content
-github_config="# GitHub configuration\n"
-github_config+="Host ${name_lower}-github\n"
-github_config+="HostName ${github_url}\n"
-github_config+="User ${github_user}\n"
-github_config+="Port ${github_port}\n"
-github_config+="IdentityFile ~/.ssh/id_${username_lowercase}"
+    # Check if ~/.ssh/config file exists, if not create it
+    if [ ! -f "$ssh_config_file" ]; then
+        echo -e "\nCreating ${ssh_config_file} file..."
+        touch "$ssh_config_file"
+    else
+        echo -e "\nThe ${ssh_config_file} already exists. Continuing with next step"
+    fi
 
-# Check if the configuration already exists in ~/.ssh/config
-if grep -q "^Host ${name_lower}-github$" "$ssh_config_file"; then
-    echo "GitHub configuration already exists in ${ssh_config_file}. Skipping appending content."
-else
-    # Append GitHub configuration content to ~/.ssh/config
-    echo -e "Appending content to ${ssh_config_file}... \n"
-    echo -e "$github_config\n" >> "$ssh_config_file"
+    # Check if the configuration already exists in ~/.ssh/config
+    if grep -q "^Host ${name_lower}-github$" "$ssh_config_file"; then
+        echo "GitHub configuration already exists in ${ssh_config_file}. Skipping appending content."
+    else
+        # Append GitHub configuration content to ~/.ssh/config
+        echo -e "Appending content to ${ssh_config_file}... \n"
+        echo -e "\n$github_config" >> "$ssh_config_file"
+    fi
 fi
 
 # Show updated content of ~/.ssh/config
