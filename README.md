@@ -8,4 +8,4 @@
     
     Remote execution without downloading:
 
-        curl -o- https://raw.githubusercontent.com/shashanthk/interactive-shell-practice/main/git_ssh_key_automation.sh | bash -s "John Doe"
+        curl -o- https://raw.githubusercontent.com/shashanthk/interactive-shell/main/git_ssh_key_automation.sh | bash -s "John Doe"
