@@ -24,8 +24,6 @@ generate_ssh_key() {
 }
 
 # Prompt for Username
-# Prompt for Username
-# Prompt for Username
 while true; do
     read -rp "Please enter your name (letters, numbers, spaces, underscores, dashes only): " username
     if [[ -n "$username" && "$username" =~ ^[a-zA-Z0-9_[:space:]-]+$ ]]; then
