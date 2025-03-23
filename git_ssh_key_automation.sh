@@ -11,10 +11,28 @@ github_port=443
 github_user="git"
 github_ssh_key_page="https://github.com/settings/ssh/new"
 
+# Function to generate SSH key
+generate_ssh_key() {
+    local key_file="$1"
+    echo "Generating new SSH key..."
+    ssh-keygen -t ed25519 -f "$key_file" -N "" 2>/dev/null
+    if [[ $? -ne 0 ]]; then
+        echo "Error: SSH key generation failed."
+        return 1
+    fi
+    return 0
+}
+
 # Prompt for Username
-while [[ -z "$username" ]]; do
-    read -p "Please enter your name: " username
-    [[ -z "$username" ]] && echo "Name cannot be empty. Please try again."
+# Prompt for Username
+# Prompt for Username
+while true; do
+    read -rp "Please enter your name (letters, numbers, spaces, underscores, dashes only): " username
+    if [[ -n "$username" && "$username" =~ ^[a-zA-Z0-9_[:space:]-]+$ ]]; then
+        break
+    else
+        echo "Invalid name. Please try again."
+    fi
 done
 
 # Normalize username
@@ -39,39 +57,50 @@ mkdir -p "$ssh_dir"
 
 # Check if SSH key file already exists
 if [[ -f "$ssh_key_file" ]]; then
-    read -p "SSH key already exists. Overwrite? (y/n) [default: n]: " overwrite_choice
+    read -rp "SSH key already exists. Overwrite? (y/n) [default: n]: " overwrite_choice
     overwrite_choice="${overwrite_choice:-n}"
-
     if [[ "$overwrite_choice" =~ ^[Yy]$ ]]; then
-        echo "Generating new SSH key..."
-        ssh-keygen -t ed25519 -f "$ssh_key_file" -N "" || { echo "SSH key generation failed"; exit 1; }
+        if ! generate_ssh_key "$ssh_key_file"; then
+            exit 1
+        fi
     else
         echo "Skipping key generation."
     fi
 else
-    echo "Generating new SSH key..."
-    ssh-keygen -t ed25519 -f "$ssh_key_file" -N "" || { echo "SSH key generation failed"; exit 1; }
+    if ! generate_ssh_key "$ssh_key_file"; then
+        exit 1
+    fi
 fi
 
 # Ensure ~/.ssh/config exists
 [[ ! -f "$ssh_config_file" ]] && touch "$ssh_config_file"
 
 # Append configuration if not already present
-if ! grep -q "Host ${name_lower}-github" "$ssh_config_file"; then
+if ! grep -q "Host ${name_lower}-github" "$ssh_config_file" >/dev/null; then
     echo -e "\n$github_config" >> "$ssh_config_file"
+    if [[ $? -ne 0 ]]; then
+        echo "Error: Failed to write to config file"
+        exit 1
+    fi
     echo "GitHub SSH configuration added."
 else
     echo "GitHub SSH configuration already exists. Skipping update."
 fi
 
+# Set correct permissions
+chmod 700 "$ssh_dir"
+chmod 600 "$ssh_key_file"
+chmod 644 "$ssh_pub_key_file"
+
 # Show Config
-echo -e "\nUpdated ${ssh_config_file}:"
+printf "\nUpdated %s:\n" "$ssh_config_file"
 echo "#######################################################################################################"
 cat "$ssh_config_file"
 echo "#######################################################################################################"
 
 # Display Public Key for GitHub
-echo -e "\nCopy and paste this key to ${github_ssh_key_page} \n"
+printf "\nCopy and paste this key to %s\n\n" "$github_ssh_key_page"
 cat "$ssh_pub_key_file"
-echo -e "\nNow, clone repositories using:\n"
-echo -e "git clone git@${name_lower}-github:<repo_owner_name>/<repo_name>.git\n"
+printf "\nNow, clone repositories using:\n\ngit clone git@%s:<repo_owner_name>/<repo_name>.git\n\n" "$name_lower-github"
+
+printf "You can test the connection by running:\n\nssh -T git@%s\n\n" "$name_lower-github"
