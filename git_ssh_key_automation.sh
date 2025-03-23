@@ -2,7 +2,7 @@
 
 # Define Paths
 home_path="$HOME"
-ssh_dir="$home_path/.ssh.bak"
+ssh_dir="$home_path/.ssh"
 ssh_config_file="$ssh_dir/config"
 
 # GitHub SSH Settings
