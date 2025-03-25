@@ -23,16 +23,22 @@ generate_ssh_key() {
     return 0
 }
 
+# Prompt message
+prompt_message="Please enter your name (letters, numbers, spaces, underscores, dashes only): "
+
 # Check if a username is provided as a command-line argument else show a prompt
 if [[ -n "$1" ]]; then
     username="$1"
 else
+
+    read -rp "$prompt_message" username
+
     while true; do
-        read -rp "Please enter your name (letters, numbers, spaces, underscores, dashes only): " username
         if [[ "$username" =~ ^[a-zA-Z0-9_[:space:]-]+$ ]]; then
             break
         else
             echo -e "\e[31m\nInvalid name. Allowed characters: letters, numbers, spaces, underscores, dashes.\n\e[0m"
+            read -rp "$prompt_message" username
         fi
     done
 fi
