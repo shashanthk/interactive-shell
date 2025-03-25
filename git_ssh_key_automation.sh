@@ -2,7 +2,7 @@
 
 # Define Paths
 home_path="$HOME"
-ssh_dir="$home_path/.ssh"
+ssh_dir="$home_path/.ssh.bak"
 ssh_config_file="$ssh_dir/config"
 
 # GitHub SSH Settings
@@ -23,15 +23,19 @@ generate_ssh_key() {
     return 0
 }
 
-# Prompt for Username
-while true; do
-    read -rp "Please enter your name (letters, numbers, spaces, underscores, dashes only): " username
-    if [[ -n "$username" && "$username" =~ ^[a-zA-Z0-9_[:space:]-]+$ ]]; then
-        break
-    else
-        echo "Invalid name. Please try again."
-    fi
-done
+# Check if a username is provided as a command-line argument else show a prompt
+if [[ -n "$1" ]]; then
+    username="$1"
+else
+    while true; do
+        read -rp "Please enter your name (letters, numbers, spaces, underscores, dashes only): " username
+        if [[ "$username" =~ ^[a-zA-Z0-9_[:space:]-]+$ ]]; then
+            break
+        else
+            echo -e "\e[31m\nInvalid name. Allowed characters: letters, numbers, spaces, underscores, dashes.\n\e[0m"
+        fi
+    done
+fi
 
 # Normalize username
 username_lowercase=$(echo "$username" | tr '[:upper:]' '[:lower:]' | tr ' ' '_')
