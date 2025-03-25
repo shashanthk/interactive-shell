@@ -37,7 +37,7 @@ else
         if [[ "$username" =~ ^[a-zA-Z0-9_[:space:]-]+$ ]]; then
             break
         else
-            echo -e "\e[31m\nInvalid name. Allowed characters: letters, numbers, spaces, underscores, dashes.\n\e[0m"
+            printf "\e[31m\nInvalid name. Allowed characters:\n  a-z A-Z 0-9 _ spaces -\n\e[0m\n"
             read -rp "$prompt_message" username
         fi
     done
