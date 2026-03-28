@@ -42,6 +42,7 @@ chmod +x generate-ssh-key.sh
 ```bash
 ./generate-ssh-key.sh --provider github --email user@example.com
 ./generate-ssh-key.sh --provider gitlab --email user@example.com --key-type rsa
+./generate-ssh-key.sh --provider github --email user@example.com --name "John Doe"
 ./generate-ssh-key.sh --provider custom --custom-host git.example.com --email user@example.com
 ```
 
@@ -59,13 +60,15 @@ curl -fsSL https://raw.githubusercontent.com/shashanthk/interactive-shell/main/g
 ```
 
 ## Supported providers
-| Provider | Host alias | HostName | Port |
+| Provider | Host alias (default) | HostName | Port |
 |---|---|---|---|
 | github | `github.com` | `ssh.github.com` | 443 |
 | gitlab | `gitlab.com` | `altssh.gitlab.com` | 443 |
 | bitbucket | `bitbucket.org` | `ssh.bitbucket.org` | 443 |
 | azure | `ssh.dev.azure.com` | `ssh.dev.azure.com` | 22 |
 | custom | your host | your host | configurable |
+
+If `--name` is provided, the host alias changes to `name-provider` (example: `john-doe-github`).
 
 ## CLI options
 | Option | Description |
@@ -74,6 +77,7 @@ curl -fsSL https://raw.githubusercontent.com/shashanthk/interactive-shell/main/g
 | `--version` | Show version |
 | `--provider <name>` | `github`, `gitlab`, `bitbucket`, `azure`, `custom` |
 | `--email <email>` | Email for key comment |
+| `--name <full name>` | Optional name used for alias (`name-provider`) and default key file (`id_<name>`) |
 | `--key-type <type>` | `ed25519` (default) or `rsa` |
 | `--key-name <name>` | Key filename under `~/.ssh/` |
 | `--custom-host <host>` | Required for `custom` provider |

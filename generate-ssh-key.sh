@@ -17,6 +17,7 @@ PROVIDER=""
 EMAIL=""
 KEY_TYPE="$DEFAULT_KEY_TYPE"
 KEY_NAME=""
+PERSON_NAME=""
 CUSTOM_HOST=""
 CUSTOM_PORT="22"
 
@@ -54,8 +55,9 @@ Options:
   --version                  Show script version
   --provider <name>          github | gitlab | bitbucket | azure | custom
   --email <email>            Email comment embedded in key
+  --name <full name>         Human name used for alias/key defaults (e.g., "John Doe")
   --key-type <type>          ed25519 | rsa (default: ed25519)
-  --key-name <name>          Key filename suffix (default: id_<provider>)
+  --key-name <name>          Key filename suffix (default: id_<provider> or id_<name>)
   --custom-host <host>       Required when --provider custom
   --custom-port <port>       Custom host SSH port (default: 22)
   --force                    Overwrite existing key files
@@ -111,6 +113,26 @@ validate_key_name() {
   esac
 }
 
+validate_person_name() {
+  [ -n "$1" ] || { err "Name cannot be empty"; return 1; }
+  printf '%s' "$1" | grep -Eq '^[A-Za-z0-9 ._-]+$' || {
+    err "Name contains unsupported characters"
+    return 1
+  }
+}
+
+normalize_name_for_key() {
+  printf '%s' "$1" \
+    | tr '[:upper:]' '[:lower:]' \
+    | sed -E 's/[^a-z0-9]+/_/g; s/^_+//; s/_+$//; s/_+/_/g'
+}
+
+normalize_name_for_alias() {
+  printf '%s' "$1" \
+    | tr '[:upper:]' '[:lower:]' \
+    | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//; s/-+/-/g'
+}
+
 validate_host() {
   [ -n "$1" ] || { err "Custom host cannot be empty"; return 1; }
   printf '%s' "$1" | grep -Eq '^[A-Za-z0-9.-]+$' || {
@@ -131,6 +153,7 @@ parse_args() {
       --version) version; exit 0 ;;
       --provider) PROVIDER="${2:-}"; shift 2 ;;
       --email) EMAIL="${2:-}"; shift 2 ;;
+      --name) PERSON_NAME="${2:-}"; shift 2 ;;
       --key-type) KEY_TYPE="${2:-}"; shift 2 ;;
       --key-name) KEY_NAME="${2:-}"; shift 2 ;;
       --custom-host) CUSTOM_HOST="${2:-}"; shift 2 ;;
@@ -381,10 +404,26 @@ main() {
 
   provider_defaults
 
+  if [ -n "$PERSON_NAME" ]; then
+    validate_person_name "$PERSON_NAME"
+    NAME_FOR_KEY="$(normalize_name_for_key "$PERSON_NAME")"
+    NAME_FOR_ALIAS="$(normalize_name_for_alias "$PERSON_NAME")"
+    [ -n "$NAME_FOR_KEY" ] || { err "Name cannot be normalized into a valid key name"; exit 1; }
+    [ -n "$NAME_FOR_ALIAS" ] || { err "Name cannot be normalized into a valid host alias"; exit 1; }
+  fi
+
   if [ -z "$KEY_NAME" ]; then
-    KEY_NAME="id_${PROVIDER}"
+    if [ -n "$PERSON_NAME" ]; then
+      KEY_NAME="id_${NAME_FOR_KEY}"
+    else
+      KEY_NAME="id_${PROVIDER}"
+    fi
   fi
   validate_key_name "$KEY_NAME"
+
+  if [ -n "$PERSON_NAME" ]; then
+    HOST_ALIAS="${NAME_FOR_ALIAS}-${PROVIDER}"
+  fi
 
   PRIVATE_KEY_PATH="$SSH_DIR/$KEY_NAME"
   PUBLIC_KEY_PATH="$PRIVATE_KEY_PATH.pub"

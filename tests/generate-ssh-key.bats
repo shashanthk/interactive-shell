@@ -21,6 +21,15 @@ setup() {
   [ -f "$HOME/.ssh/id_gitlab" ]
 }
 
+@test "name input sets default key filename and alias convention" {
+  run "$BATS_TEST_DIRNAME/../generate-ssh-key.sh" --provider github --email user@example.com --name "John Doe" --no-color
+  [ "$status" -eq 0 ]
+  [ -f "$HOME/.ssh/id_john_doe" ]
+  [ -f "$HOME/.ssh/id_john_doe.pub" ]
+  run cat "$HOME/.ssh/config"
+  [[ "$output" == *"Host john-doe-github"* ]]
+}
+
 @test "supports provider matrix" {
   for provider in github gitlab bitbucket azure; do
     run "$BATS_TEST_DIRNAME/../generate-ssh-key.sh" --provider "$provider" --email user@example.com --key-name "id_${provider}_x" --no-color
