@@ -1,43 +1,30 @@
-#!/bin/sh
+#!/usr/bin/env bash
+set -euo pipefail
 
-# Detect the actual running shell
-if [ -n "$BASH" ]; then
-    shell_name="bash"
-elif [ -n "$ZSH_VERSION" ]; then
-    shell_name="zsh"
-elif [ -n "$fish_version" ]; then
-    shell_name="fish"
-else
-    shell_name=$(ps -o comm= -p $$ 2>/dev/null || echo "sh")
-fi
+REMOTE_BASE_URL="https://raw.githubusercontent.com/shashanthk/interactive-shell/main"
+SCRIPT_NAME="generate-ssh-key.sh"
+TMP_SCRIPT="$(mktemp /tmp/${SCRIPT_NAME}.XXXXXX)"
 
-echo "Detected shell: $shell_name"
+cleanup() {
+  rm -f "$TMP_SCRIPT"
+}
+trap cleanup EXIT
 
-# Set default shell execution command
-shell_cmd="sh"
+require_cmd() {
+  command -v "$1" >/dev/null 2>&1 || {
+    echo "ERROR: Missing required command: $1" >&2
+    exit 1
+  }
+}
 
-case "$shell_name" in
-    zsh) shell_cmd="zsh" ;;
-    bash) shell_cmd="bash" ;;
-    fish) shell_cmd="fish";;
-esac
+require_cmd curl
 
-# Define temporary script location
-script_path="/tmp/git_ssh_key_automation.sh"
+echo "Downloading $SCRIPT_NAME..."
+curl --fail --silent --show-error --location \
+  "${REMOTE_BASE_URL}/${SCRIPT_NAME}" \
+  --output "$TMP_SCRIPT"
 
-# # Download the script
-echo "Downloading script..."
-curl -o "$script_path" -s https://raw.githubusercontent.com/shashanthk/interactive-shell/main/git_ssh_key_automation.sh
+chmod 700 "$TMP_SCRIPT"
 
-# Make it executable
-chmod +x "$script_path"
-
-# Execute the script with the detected shell
-echo "Executing script..."
-$shell_cmd "$script_path"
-
-# Cleanup
-echo "Cleaning up..."
-rm -f "$script_path"
-
-echo "Done!"
+echo "Executing downloaded script..."
+exec "$TMP_SCRIPT" "$@"

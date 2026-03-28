@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  lint-test-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck shfmt bats openssh-client
+
+      - name: Shellcheck
+        run: shellcheck generate-ssh-key.sh run_git_ssh_key_automation.sh git_ssh_key_automation.sh
+
+      - name: shfmt check
+        run: shfmt -d generate-ssh-key.sh run_git_ssh_key_automation.sh git_ssh_key_automation.sh tests/*.bats tests/*.bash
+
+      - name: Bats tests
+        run: bats tests/
+
+      - name: Docker build
+        run: docker build -t ssh-key-tool-test .

@@ -1,0 +1,16 @@
+version: '3.9'
+services:
+  app:
+    build: .
+    working_dir: /workspace
+    command: ["bash", "-lc", "./generate-ssh-key.sh --help"]
+
+  test:
+    build: .
+    working_dir: /workspace
+    command: ["bash", "-lc", "bats tests/"]
+
+  shellcheck:
+    build: .
+    working_dir: /workspace
+    command: ["bash", "-lc", "shellcheck generate-ssh-key.sh run_git_ssh_key_automation.sh git_ssh_key_automation.sh"]
