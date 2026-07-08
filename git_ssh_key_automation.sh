@@ -37,7 +37,7 @@ run_remote_target() {
     --output "$tmp_script"
 
   chmod 700 "$tmp_script"
-  exec "$tmp_script" "$@"
+  bash "$tmp_script" "$@"
 }
 
 if [ "$#" -eq 0 ]; then
