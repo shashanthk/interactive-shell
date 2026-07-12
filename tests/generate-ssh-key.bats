@@ -11,8 +11,14 @@ setup() {
   [ "$status" -eq 0 ]
   [ -f "$HOME/.ssh/id_github" ]
   [ -f "$HOME/.ssh/id_github.pub" ]
-  run stat -c '%a' "$HOME/.ssh/id_github"
-  [ "$output" = "600" ]
+  run stat_perm "$HOME/.ssh/id_github"
+  if is_windows_bash; then
+    # NTFS via Git Bash doesn't reliably map chmod bits to an exact
+    # POSIX octal value; just confirm stat succeeded.
+    [ -n "$output" ]
+  else
+    [ "$output" = "600" ]
+  fi
 }
 
 @test "generates RSA key successfully" {
@@ -45,7 +51,13 @@ setup() {
 
 @test "fails if ssh-keygen missing" {
   rm -f "$TEST_ROOT/bin/ssh-keygen"
-  run "$BATS_TEST_DIRNAME/../generate-ssh-key.sh" --provider github --email user@example.com --no-color
+
+  # A real ssh-keygen elsewhere on PATH (e.g. openssh-client preinstalled
+  # on Linux/macOS/Windows CI runners) would let the script fall through
+  # to it once only the mock is removed. minimal_path keeps just the
+  # mocks plus what's needed to start the script and pass validation,
+  # so this test is deterministic regardless of the host.
+  PATH="$(minimal_path)" run "$BATS_TEST_DIRNAME/../generate-ssh-key.sh" --provider github --email user@example.com --no-color
   [ "$status" -ne 0 ]
   [[ "$output" == *"Missing required command: ssh-keygen"* ]]
 }
@@ -79,20 +91,40 @@ setup() {
 }
 
 @test "symlink attack is rejected" {
+  if is_windows_bash; then
+    # Creating real symlinks on Windows requires elevated privileges /
+    # Developer Mode, which isn't reliably available in CI. The
+    # underlying safe_file_target() defense is still exercised on
+    # Linux/macOS.
+    skip "symlink creation requires elevated privileges on Windows"
+  fi
   ln -s /tmp "$HOME/.ssh/id_github"
   run "$BATS_TEST_DIRNAME/../generate-ssh-key.sh" --provider github --email user@example.com --force --no-color
   [ "$status" -ne 0 ]
   [[ "$output" == *"Refusing to use symlink target"* ]]
 }
 
-@test "copy to clipboard works with xclip" {
+@test "copy to clipboard succeeds using the platform tool" {
+  tool="$(platform_clipboard_tool)"
+  if [ ! -x "$TEST_ROOT/bin/$tool" ]; then
+    cat >"$TEST_ROOT/bin/$tool" <<'MOCK'
+#!/usr/bin/env bash
+cat >/dev/null
+MOCK
+    chmod +x "$TEST_ROOT/bin/$tool"
+  fi
+
   run "$BATS_TEST_DIRNAME/../generate-ssh-key.sh" --provider github --email user@example.com --copy-to-clipboard --no-color
   [ "$status" -eq 0 ]
 }
 
 @test "clipboard utility missing fails" {
-  rm -f "$TEST_ROOT/bin/xclip"
-  run "$BATS_TEST_DIRNAME/../generate-ssh-key.sh" --provider github --email user@example.com --copy-to-clipboard --no-color
+  rm -f "$TEST_ROOT/bin/xclip" "$TEST_ROOT/bin/pbcopy" "$TEST_ROOT/bin/clip.exe" "$TEST_ROOT/bin/clip" "$TEST_ROOT/bin/wl-copy"
+
+  # minimal_path guarantees no real system clipboard utility (pbcopy on
+  # macOS, clip.exe on Windows, xclip/wl-copy on Linux) is reachable
+  # either, regardless of which OS this test runs on.
+  PATH="$(minimal_path)" run "$BATS_TEST_DIRNAME/../generate-ssh-key.sh" --provider github --email user@example.com --copy-to-clipboard --no-color
   [ "$status" -ne 0 ]
 }
 
@@ -111,6 +143,12 @@ setup() {
   chmod 777 "$HOME/.ssh"
   run "$BATS_TEST_DIRNAME/../generate-ssh-key.sh" --provider github --email user@example.com --no-color
   [ "$status" -eq 0 ]
-  run stat -c '%a' "$HOME/.ssh"
-  [ "$output" = "700" ]
+  run stat_perm "$HOME/.ssh"
+  if is_windows_bash; then
+    # NTFS via Git Bash doesn't reliably map chmod bits to an exact
+    # POSIX octal value; just confirm stat succeeded.
+    [ -n "$output" ]
+  else
+    [ "$output" = "700" ]
+  fi
 }
