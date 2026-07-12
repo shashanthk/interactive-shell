@@ -47,9 +47,13 @@ The original script had multiple security weaknesses (input handling, overwrite 
 - Default to `ed25519`.
 - Disable implicit overwrite unless `--force` is set.
 - Never accept path separators in key names.
-- Avoid storing passphrase in env vars/history (current script uses empty passphrase by default; future enhancement can add secure prompt mode).
+- Avoid storing passphrase in env vars/history. The script still defaults to
+  an empty passphrase for unattended/automated use, but `--passphrase-prompt`
+  now lets `ssh-keygen` prompt interactively (twice, with confirmation) so
+  the passphrase is never a command-line argument or visible in `ps` output.
+  It requires a real TTY on stdin and is rejected outright when piped via
+  `curl | bash`, where no terminal is attached.
 
 ## Additional recommendations
-- Add optional passphrase prompt mode (`read -s`).
 - Add explicit root warning banner.
 - Add checksum verification for downloaded scripts in `run_git_ssh_key_automation.sh`.

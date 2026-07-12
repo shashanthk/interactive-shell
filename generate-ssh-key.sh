@@ -12,6 +12,7 @@ FORCE=0
 COPY_TO_CLIPBOARD=0
 PRINT_PUBLIC_KEY=0
 START_AGENT=1
+PASSPHRASE_PROMPT=0
 
 PROVIDER=""
 EMAIL=""
@@ -64,6 +65,9 @@ Options:
   --dry-run                  Print actions without changing files
   --copy-to-clipboard        Copy public key using system clipboard utility
   --print-public-key         Print generated public key to stdout
+  --passphrase-prompt        Prompt ssh-keygen for a passphrase interactively
+                             (default: no passphrase). Requires a real
+                             terminal; not usable via curl | bash.
   --no-color                 Disable colored output
   --no-agent                 Skip starting ssh-agent / adding key
 
@@ -162,6 +166,7 @@ parse_args() {
       --dry-run) DRY_RUN=1; shift ;;
       --copy-to-clipboard) COPY_TO_CLIPBOARD=1; shift ;;
       --print-public-key) PRINT_PUBLIC_KEY=1; shift ;;
+      --passphrase-prompt) PASSPHRASE_PROMPT=1; shift ;;
       --no-color) COLOR=0; shift ;;
       --no-agent) START_AGENT=0; shift ;;
       --) shift; break ;;
@@ -269,10 +274,19 @@ generate_key() {
     return
   fi
 
+  keygen_args=(-C "$EMAIL" -f "$private_key")
   if [ "$KEY_TYPE" = "rsa" ]; then
-    "$SSH_KEYGEN_BIN" -q -t rsa -b "$DEFAULT_RSA_BITS" -C "$EMAIL" -f "$private_key" -N ""
+    keygen_args=(-t rsa -b "$DEFAULT_RSA_BITS" "${keygen_args[@]}")
   else
-    "$SSH_KEYGEN_BIN" -q -t ed25519 -C "$EMAIL" -f "$private_key" -N ""
+    keygen_args=(-t ed25519 "${keygen_args[@]}")
+  fi
+
+  if [ "$PASSPHRASE_PROMPT" -eq 1 ]; then
+    # Let ssh-keygen prompt interactively (twice, with confirmation) so the
+    # passphrase never appears as a command-line argument or in ps output.
+    "$SSH_KEYGEN_BIN" "${keygen_args[@]}"
+  else
+    "$SSH_KEYGEN_BIN" -q "${keygen_args[@]}" -N ""
   fi
 
   chmod 600 "$private_key"
@@ -392,6 +406,12 @@ main() {
 
   [ -n "$PROVIDER" ] || { err "--provider is required"; usage; exit 2; }
   [ -n "$EMAIL" ] || { err "--email is required"; usage; exit 2; }
+
+  if [ "$PASSPHRASE_PROMPT" -eq 1 ] && [ "$DRY_RUN" -ne 1 ] && [ ! -t 0 ]; then
+    err "--passphrase-prompt requires an interactive terminal (stdin is not a TTY)."
+    err "This won't work when this script is piped in via curl | bash. Download it first, then run it directly."
+    exit 1
+  fi
 
   validate_provider "$PROVIDER"
   validate_email "$EMAIL"
