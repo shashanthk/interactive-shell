@@ -27,3 +27,30 @@ jobs:
 
       - name: Docker build
         run: docker build -t ssh-key-tool-test .
+
+  test-macos:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install bats
+        run: brew install bats-core
+
+      - name: Bats tests
+        run: bats tests/
+
+  test-windows-git-bash:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install bats
+        run: npm install -g bats
+
+      - name: Bats tests
+        run: bats tests/
