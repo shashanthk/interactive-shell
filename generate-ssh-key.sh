@@ -380,6 +380,24 @@ copy_public_key() {
         exit 1
       fi
       ;;
+    MINGW* | MSYS* | CYGWIN*)
+      if command -v clip.exe >/dev/null 2>&1; then
+        if [ "$DRY_RUN" -eq 1 ]; then
+          log "[dry-run] clip.exe < '$pub_file'"
+        else
+          clip.exe <"$pub_file"
+        fi
+      elif command -v clip >/dev/null 2>&1; then
+        if [ "$DRY_RUN" -eq 1 ]; then
+          log "[dry-run] clip < '$pub_file'"
+        else
+          clip <"$pub_file"
+        fi
+      else
+        err "Git Bash detected but clip.exe is unavailable"
+        exit 1
+      fi
+      ;;
     *)
       err "Unsupported OS for clipboard copy: $os_name"
       exit 1
