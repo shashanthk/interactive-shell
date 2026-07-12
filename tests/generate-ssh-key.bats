@@ -45,7 +45,20 @@ setup() {
 
 @test "fails if ssh-keygen missing" {
   rm -f "$TEST_ROOT/bin/ssh-keygen"
-  run "$BATS_TEST_DIRNAME/../generate-ssh-key.sh" --provider github --email user@example.com --no-color
+
+  # A real ssh-keygen elsewhere on PATH (e.g. openssh-client preinstalled
+  # on CI runners) would let the script fall through to it once only the
+  # mock is removed. Restrict PATH to the mocks plus symlinks to the real
+  # `env`, `bash` (needed to even start the script via its shebang) and
+  # `grep` (the only external tool exercised before the ssh-keygen check)
+  # so this test is deterministic regardless of the host.
+  shim_dir="$TEST_ROOT/shim"
+  mkdir -p "$shim_dir"
+  for tool in env bash grep; do
+    ln -sf "$(command -v "$tool")" "$shim_dir/$tool"
+  done
+
+  PATH="$TEST_ROOT/bin:$shim_dir" run "$BATS_TEST_DIRNAME/../generate-ssh-key.sh" --provider github --email user@example.com --no-color
   [ "$status" -ne 0 ]
   [[ "$output" == *"Missing required command: ssh-keygen"* ]]
 }

@@ -5,7 +5,7 @@ setup_test_env() {
   mkdir -p "$HOME/.ssh" "$TEST_ROOT/bin"
   export PATH="$TEST_ROOT/bin:$PATH"
 
-  cat > "$TEST_ROOT/bin/ssh-keygen" <<'MOCK'
+  cat >"$TEST_ROOT/bin/ssh-keygen" <<'MOCK'
 #!/usr/bin/env bash
 set -euo pipefail
 out=""
@@ -22,18 +22,18 @@ printf 'PRIVATE-%s\n' "$comment" > "$out"
 printf 'ssh-ed25519 AAAATEST %s\n' "$comment" > "$out.pub"
 MOCK
 
-  cat > "$TEST_ROOT/bin/ssh-agent" <<'MOCK'
+  cat >"$TEST_ROOT/bin/ssh-agent" <<'MOCK'
 #!/usr/bin/env bash
 echo "SSH_AUTH_SOCK=/tmp/mock.sock; export SSH_AUTH_SOCK;"
 echo "SSH_AGENT_PID=777; export SSH_AGENT_PID;"
 MOCK
 
-  cat > "$TEST_ROOT/bin/ssh-add" <<'MOCK'
+  cat >"$TEST_ROOT/bin/ssh-add" <<'MOCK'
 #!/usr/bin/env bash
 exit 0
 MOCK
 
-  cat > "$TEST_ROOT/bin/xclip" <<'MOCK'
+  cat >"$TEST_ROOT/bin/xclip" <<'MOCK'
 #!/usr/bin/env bash
 cat >/dev/null
 MOCK
