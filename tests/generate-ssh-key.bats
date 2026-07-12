@@ -50,13 +50,21 @@ setup() {
 }
 
 @test "fails if ssh-keygen missing" {
+  if is_windows_bash; then
+    # minimal_path relies on symlinks to shadow the real system
+    # ssh-keygen bundled with Git for Windows, but creating symlinks
+    # on Windows needs elevated privileges/Developer Mode, which isn't
+    # reliably available in CI (see the symlink-attack test above).
+    # Still fully covered on Linux/macOS.
+    skip "cannot reliably hide the real ssh-keygen from PATH on Windows"
+  fi
   rm -f "$TEST_ROOT/bin/ssh-keygen"
 
   # A real ssh-keygen elsewhere on PATH (e.g. openssh-client preinstalled
-  # on Linux/macOS/Windows CI runners) would let the script fall through
-  # to it once only the mock is removed. minimal_path keeps just the
-  # mocks plus what's needed to start the script and pass validation,
-  # so this test is deterministic regardless of the host.
+  # on Linux/macOS CI runners) would let the script fall through to it
+  # once only the mock is removed. minimal_path keeps just the mocks
+  # plus what's needed to start the script and pass validation, so this
+  # test is deterministic regardless of the host.
   PATH="$(minimal_path)" run "$BATS_TEST_DIRNAME/../generate-ssh-key.sh" --provider github --email user@example.com --no-color
   [ "$status" -ne 0 ]
   [[ "$output" == *"Missing required command: ssh-keygen"* ]]
@@ -119,11 +127,18 @@ MOCK
 }
 
 @test "clipboard utility missing fails" {
-  rm -f "$TEST_ROOT/bin/xclip" "$TEST_ROOT/bin/pbcopy" "$TEST_ROOT/bin/clip.exe" "$TEST_ROOT/bin/clip" "$TEST_ROOT/bin/wl-copy"
+  if is_windows_bash; then
+    # clip.exe is a native Windows command (System32), not something a
+    # PATH shim can hide, and minimal_path's symlink trick needs
+    # privileges CI doesn't have (see the symlink-attack test above).
+    # Still fully covered on Linux/macOS.
+    skip "cannot make clip.exe unavailable on Windows"
+  fi
+  rm -f "$TEST_ROOT/bin/xclip" "$TEST_ROOT/bin/pbcopy" "$TEST_ROOT/bin/wl-copy"
 
   # minimal_path guarantees no real system clipboard utility (pbcopy on
-  # macOS, clip.exe on Windows, xclip/wl-copy on Linux) is reachable
-  # either, regardless of which OS this test runs on.
+  # macOS, xclip/wl-copy on Linux) is reachable either, regardless of
+  # which of those two OSes this test runs on.
   PATH="$(minimal_path)" run "$BATS_TEST_DIRNAME/../generate-ssh-key.sh" --provider github --email user@example.com --copy-to-clipboard --no-color
   [ "$status" -ne 0 ]
 }
