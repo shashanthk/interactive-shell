@@ -27,4 +27,4 @@ curl --fail --silent --show-error --location \
 chmod 700 "$TMP_SCRIPT"
 
 echo "Executing downloaded script..."
-exec "$TMP_SCRIPT" "$@"
+bash "$TMP_SCRIPT" "$@"
