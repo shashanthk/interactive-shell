@@ -52,4 +52,4 @@ The original script had multiple security weaknesses (input handling, overwrite 
 ## Additional recommendations
 - Add optional passphrase prompt mode (`read -s`).
 - Add explicit root warning banner.
-- Add checksum verification for downloaded scripts in `run_git_ssh_key_automation.sh`.
+- Add checksum verification for downloaded scripts in `git_ssh_key_automation.sh`.

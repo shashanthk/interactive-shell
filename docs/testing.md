@@ -8,8 +8,8 @@ bats tests/
 
 ## Lint and formatting
 ```bash
-shellcheck generate-ssh-key.sh run_git_ssh_key_automation.sh git_ssh_key_automation.sh
-shfmt -d generate-ssh-key.sh run_git_ssh_key_automation.sh git_ssh_key_automation.sh tests/*.bats tests/*.bash
+shellcheck generate-ssh-key.sh git_ssh_key_automation.sh
+shfmt -d generate-ssh-key.sh git_ssh_key_automation.sh tests/*.bats tests/*.bash
 ```
 
 ## Covered scenarios
