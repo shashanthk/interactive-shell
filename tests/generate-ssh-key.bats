@@ -101,6 +101,17 @@ setup() {
   [ "$status" -ne 0 ]
 }
 
+@test "passphrase-prompt requires a tty" {
+  run "$BATS_TEST_DIRNAME/../generate-ssh-key.sh" --provider github --email user@example.com --passphrase-prompt --no-color
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"interactive terminal"* ]]
+}
+
+@test "passphrase-prompt is allowed under dry-run without a tty" {
+  run "$BATS_TEST_DIRNAME/../generate-ssh-key.sh" --provider github --email user@example.com --passphrase-prompt --dry-run --no-color
+  [ "$status" -eq 0 ]
+}
+
 @test "dry-run does not create files" {
   run "$BATS_TEST_DIRNAME/../generate-ssh-key.sh" --provider github --email user@example.com --dry-run --no-color
   [ "$status" -eq 0 ]

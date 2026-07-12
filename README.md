@@ -86,6 +86,7 @@ If `--name` is provided, the host alias changes to `name-provider` (example: `jo
 | `--dry-run` | Preview without changes |
 | `--copy-to-clipboard` | Copy public key to clipboard |
 | `--print-public-key` | Print public key |
+| `--passphrase-prompt` | Prompt `ssh-keygen` for a passphrase interactively (default: no passphrase). Needs a real terminal, so it isn't usable via `curl \| bash` |
 | `--no-agent` | Skip `ssh-agent` and `ssh-add` |
 | `--no-color` | Disable color output |
 
