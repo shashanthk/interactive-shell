@@ -43,6 +43,11 @@ The original script had multiple security weaknesses (input handling, overwrite 
 - **Issue:** running as root writes keys into root account context, often unintended.
 - **Recommendation:** avoid root execution except in controlled automation.
 
+### 8) Unpinned, unverified curl | bash fetch
+- **Severity:** High for unattended/production use.
+- **Issue:** the remote-execution wrappers (`git_ssh_key_automation.sh`, `run_git_ssh_key_automation.sh`) always fetched `generate-ssh-key.sh` from the floating `main` branch with no integrity check. Anyone piping this repo into `bash` without cloning was trusting whatever was on `main` at that exact moment - a compromised branch, a bad push, or a MITM that also breaches TLS would mean silent arbitrary code execution.
+- **Fix:** both wrappers now support `SSH_KEYGEN_TOOL_REF` (pin to a specific commit/tag instead of `main`) and `SSH_KEYGEN_TOOL_SHA256` (refuse to execute the download unless its SHA-256 matches). Unpinned/unverified use still works as before, but now prints an explicit warning that no integrity check was performed. See the README's "Remote execution" section for pinned usage.
+
 ## Secure defaults recommendation
 - Default to `ed25519`.
 - Disable implicit overwrite unless `--force` is set.
@@ -52,4 +57,3 @@ The original script had multiple security weaknesses (input handling, overwrite 
 ## Additional recommendations
 - Add optional passphrase prompt mode (`read -s`).
 - Add explicit root warning banner.
-- Add checksum verification for downloaded scripts in `run_git_ssh_key_automation.sh`.

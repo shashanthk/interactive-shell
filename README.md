@@ -59,6 +59,14 @@ After generation, the script prints the public key path. Upload the public key i
 curl -fsSL https://raw.githubusercontent.com/shashanthk/interactive-shell/main/git_ssh_key_automation.sh |   bash -s -- --provider github --email user@example.com
 ```
 
+This convenience form trusts whatever is on the `main` branch *at the moment you run it*, with no integrity check. For unattended or production use, pin to a specific commit and verify its checksum instead:
+```bash
+export SSH_KEYGEN_TOOL_REF=<commit-sha>
+export SSH_KEYGEN_TOOL_SHA256=<sha256 of generate-ssh-key.sh at that commit>
+curl -fsSL "https://raw.githubusercontent.com/shashanthk/interactive-shell/${SSH_KEYGEN_TOOL_REF}/git_ssh_key_automation.sh" | bash -s -- --provider github --email user@example.com
+```
+`git_ssh_key_automation.sh` fetches `generate-ssh-key.sh` from `$SSH_KEYGEN_TOOL_REF` (default `main`) and, if `$SSH_KEYGEN_TOOL_SHA256` is set, refuses to run the downloaded script unless its SHA-256 matches.
+
 ## Supported providers
 | Provider | Host alias (default) | HostName | Port |
 |---|---|---|---|
