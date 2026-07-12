@@ -27,6 +27,7 @@ The original script had multiple security weaknesses (input handling, overwrite 
 - **Severity:** Medium
 - **Issue:** `.ssh` permissions may remain insecure and script only corrected after generation.
 - **Fix:** enforce `.ssh` 700 before key write, private key 600/public key 644.
+- **Platform caveat:** on native Windows (Git Bash), `chmod` doesn't translate to real NTFS ACLs the way it does on Linux/macOS. The script still applies it for consistency, but this permissions model should be treated as best-effort rather than a hard guarantee on Windows.
 
 ### 5) Command dependency assumptions
 - **Severity:** Medium

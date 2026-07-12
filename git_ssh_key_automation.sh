@@ -18,23 +18,24 @@ Use one of:
 USAGE
 }
 
-require_cmd() {
-  command -v "$1" >/dev/null 2>&1 || {
-    echo "ERROR: Missing required command: $1" >&2
+download() {
+  if command -v curl >/dev/null 2>&1; then
+    curl --fail --silent --show-error --location "$1" --output "$2"
+  elif command -v wget >/dev/null 2>&1; then
+    wget --quiet --output-document "$2" "$1"
+  else
+    echo "ERROR: Missing required command: curl or wget" >&2
     exit 1
-  }
+  fi
 }
 
 run_remote_target() {
   local tmp_script
-  tmp_script="$(mktemp /tmp/${TARGET_NAME}.XXXXXX)"
+  tmp_script="$(mktemp "${TMPDIR:-/tmp}/${TARGET_NAME}.XXXXXX")"
   trap 'rm -f "$tmp_script"' EXIT
 
-  require_cmd curl
   echo "Local ${TARGET_NAME} not found; downloading from ${REMOTE_BASE_URL}..." >&2
-  curl --fail --silent --show-error --location \
-    "${REMOTE_BASE_URL}/${TARGET_NAME}" \
-    --output "$tmp_script"
+  download "${REMOTE_BASE_URL}/${TARGET_NAME}" "$tmp_script"
 
   chmod 700 "$tmp_script"
   bash "$tmp_script" "$@"

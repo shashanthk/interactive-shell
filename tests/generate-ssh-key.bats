@@ -114,3 +114,10 @@ setup() {
   run stat -c '%a' "$HOME/.ssh"
   [ "$output" = "700" ]
 }
+
+@test "script version is documented in the changelog" {
+  version=$(grep -m1 '^SCRIPT_VERSION=' "$BATS_TEST_DIRNAME/../generate-ssh-key.sh" | sed -E 's/.*"([0-9.]+)".*/\1/')
+  [ -n "$version" ]
+  run grep -q "^## ${version}" "$BATS_TEST_DIRNAME/../CHANGELOG.md"
+  [ "$status" -eq 0 ]
+}
