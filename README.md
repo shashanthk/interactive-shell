@@ -108,6 +108,9 @@ Add public key in provider UI: https://github.com/settings/ssh/new
 - Script refuses symlink targets for key files.
 - Script enforces private key permissions (`600`) and `.ssh` directory (`700`).
 - Avoid running as root unless explicitly required.
+- On native Windows (Git Bash), `chmod` doesn't map onto real NTFS ACLs the
+  way it does on Linux/macOS. The script still applies it, but treat file
+  permissions as a best-effort layer there, not a hard guarantee.
 
 See [docs/security.md](docs/security.md) for full threat review.
 

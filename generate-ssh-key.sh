@@ -84,8 +84,8 @@ require_cmd() {
 }
 
 validate_provider() {
-  case "$1" in
-    github|gitlab|bitbucket|azure|custom) return 0 ;;
+  case " $SUPPORTED_PROVIDERS " in
+    *" $1 "*) return 0 ;;
     *) err "Invalid provider '$1'. Supported: $SUPPORTED_PROVIDERS"; return 1 ;;
   esac
 }
@@ -225,6 +225,7 @@ ensure_ssh_dir() {
   chmod 700 "$SSH_DIR"
 
   # reject dangerous permissions
+  local current_mode
   current_mode=$(stat -c '%a' "$SSH_DIR" 2>/dev/null || stat -f '%Mp%Lp' "$SSH_DIR")
   case "$current_mode" in
     700|0700) ;;
@@ -236,7 +237,7 @@ ensure_ssh_dir() {
 }
 
 safe_file_target() {
-  target="$1"
+  local target="$1"
   if [ -L "$target" ]; then
     err "Refusing to use symlink target: $target"
     exit 1
@@ -244,7 +245,7 @@ safe_file_target() {
 }
 
 generate_key() {
-  private_key="$1"
+  local private_key="$1"
   safe_file_target "$private_key"
   safe_file_target "$private_key.pub"
 
@@ -280,39 +281,40 @@ generate_key() {
 }
 
 upsert_ssh_config() {
-  local_host="$1"
-  local_name="$2"
-  local_user="$3"
-  local_port="$4"
-  local_identity="$5"
+  local host_alias="$1"
+  local hostname="$2"
+  local ssh_user="$3"
+  local port="$4"
+  local identity="$5"
+  local block
 
   block=$(cat <<EOF_BLOCK
-Host ${local_host}
-    HostName ${local_name}
-    User ${local_user}
-    Port ${local_port}
-    IdentityFile ${local_identity}
+Host ${host_alias}
+    HostName ${hostname}
+    User ${ssh_user}
+    Port ${port}
+    IdentityFile ${identity}
     IdentitiesOnly yes
 EOF_BLOCK
 )
 
   if [ "$DRY_RUN" -eq 1 ]; then
-    log "[dry-run] append/update host block in '$SSH_CONFIG' for Host ${local_host}"
+    log "[dry-run] append/update host block in '$SSH_CONFIG' for Host ${host_alias}"
     return
   fi
 
   [ -f "$SSH_CONFIG" ] || touch "$SSH_CONFIG"
   chmod 600 "$SSH_CONFIG"
 
-  if grep -q "^Host ${local_host}$" "$SSH_CONFIG"; then
-    warn "Host ${local_host} already exists in config; leaving existing block unchanged"
+  if grep -q "^Host ${host_alias}$" "$SSH_CONFIG"; then
+    warn "Host ${host_alias} already exists in config; leaving existing block unchanged"
   else
     printf '\n%s\n' "$block" >>"$SSH_CONFIG"
   fi
 }
 
 start_agent_and_add_key() {
-  key_file="$1"
+  local key_file="$1"
   if [ "$START_AGENT" -ne 1 ]; then
     return
   fi
@@ -336,11 +338,12 @@ start_agent_and_add_key() {
 }
 
 copy_public_key() {
-  pub_file="$1"
+  local pub_file="$1"
   if [ "$COPY_TO_CLIPBOARD" -ne 1 ]; then
     return 0
   fi
 
+  local os_name
   os_name=$(uname -s)
   case "$os_name" in
     Darwin)
