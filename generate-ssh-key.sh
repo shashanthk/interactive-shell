@@ -85,8 +85,11 @@ require_cmd() {
 
 validate_provider() {
   case "$1" in
-    github|gitlab|bitbucket|azure|custom) return 0 ;;
-    *) err "Invalid provider '$1'. Supported: $SUPPORTED_PROVIDERS"; return 1 ;;
+    github | gitlab | bitbucket | azure | custom) return 0 ;;
+    *)
+      err "Invalid provider '$1'. Supported: $SUPPORTED_PROVIDERS"
+      return 1
+      ;;
   esac
 }
 
@@ -100,21 +103,36 @@ validate_email() {
 
 validate_key_type() {
   case "$1" in
-    ed25519|rsa) return 0 ;;
-    *) err "Invalid key type '$1'. Use ed25519 or rsa."; return 1 ;;
+    ed25519 | rsa) return 0 ;;
+    *)
+      err "Invalid key type '$1'. Use ed25519 or rsa."
+      return 1
+      ;;
   esac
 }
 
 validate_key_name() {
-  [ -n "$1" ] || { err "Key name cannot be empty"; return 1; }
+  [ -n "$1" ] || {
+    err "Key name cannot be empty"
+    return 1
+  }
   case "$1" in
-    */*|*..*|.*) err "Key name must not contain path traversal or leading dot"; return 1 ;;
-    *[!A-Za-z0-9._-]*) err "Key name contains unsupported characters"; return 1 ;;
+    */* | *..* | .*)
+      err "Key name must not contain path traversal or leading dot"
+      return 1
+      ;;
+    *[!A-Za-z0-9._-]*)
+      err "Key name contains unsupported characters"
+      return 1
+      ;;
   esac
 }
 
 validate_person_name() {
-  [ -n "$1" ] || { err "Name cannot be empty"; return 1; }
+  [ -n "$1" ] || {
+    err "Name cannot be empty"
+    return 1
+  }
   printf '%s' "$1" | grep -Eq '^[A-Za-z0-9 ._-]+$' || {
     err "Name contains unsupported characters"
     return 1
@@ -122,19 +140,22 @@ validate_person_name() {
 }
 
 normalize_name_for_key() {
-  printf '%s' "$1" \
-    | tr '[:upper:]' '[:lower:]' \
-    | sed -E 's/[^a-z0-9]+/_/g; s/^_+//; s/_+$//; s/_+/_/g'
+  printf '%s' "$1" |
+    tr '[:upper:]' '[:lower:]' |
+    sed -E 's/[^a-z0-9]+/_/g; s/^_+//; s/_+$//; s/_+/_/g'
 }
 
 normalize_name_for_alias() {
-  printf '%s' "$1" \
-    | tr '[:upper:]' '[:lower:]' \
-    | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//; s/-+/-/g'
+  printf '%s' "$1" |
+    tr '[:upper:]' '[:lower:]' |
+    sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//; s/-+/-/g'
 }
 
 validate_host() {
-  [ -n "$1" ] || { err "Custom host cannot be empty"; return 1; }
+  [ -n "$1" ] || {
+    err "Custom host cannot be empty"
+    return 1
+  }
   printf '%s' "$1" | grep -Eq '^[A-Za-z0-9.-]+$' || {
     err "Custom host has invalid characters"
     return 1
@@ -142,30 +163,89 @@ validate_host() {
 }
 
 validate_port() {
-  printf '%s' "$1" | grep -Eq '^[0-9]+$' || { err "Port must be numeric"; return 1; }
-  [ "$1" -ge 1 ] && [ "$1" -le 65535 ] || { err "Port must be between 1 and 65535"; return 1; }
+  printf '%s' "$1" | grep -Eq '^[0-9]+$' || {
+    err "Port must be numeric"
+    return 1
+  }
+  if [ "$1" -ge 1 ] && [ "$1" -le 65535 ]; then
+    return 0
+  fi
+  err "Port must be between 1 and 65535"
+  return 1
 }
 
 parse_args() {
   while [ "$#" -gt 0 ]; do
     case "$1" in
-      --help) usage; exit 0 ;;
-      --version) version; exit 0 ;;
-      --provider) PROVIDER="${2:-}"; shift 2 ;;
-      --email) EMAIL="${2:-}"; shift 2 ;;
-      --name) PERSON_NAME="${2:-}"; shift 2 ;;
-      --key-type) KEY_TYPE="${2:-}"; shift 2 ;;
-      --key-name) KEY_NAME="${2:-}"; shift 2 ;;
-      --custom-host) CUSTOM_HOST="${2:-}"; shift 2 ;;
-      --custom-port) CUSTOM_PORT="${2:-}"; shift 2 ;;
-      --force) FORCE=1; shift ;;
-      --dry-run) DRY_RUN=1; shift ;;
-      --copy-to-clipboard) COPY_TO_CLIPBOARD=1; shift ;;
-      --print-public-key) PRINT_PUBLIC_KEY=1; shift ;;
-      --no-color) COLOR=0; shift ;;
-      --no-agent) START_AGENT=0; shift ;;
-      --) shift; break ;;
-      *) err "Unknown argument: $1"; usage; exit 2 ;;
+      --help)
+        usage
+        exit 0
+        ;;
+      --version)
+        version
+        exit 0
+        ;;
+      --provider)
+        PROVIDER="${2:-}"
+        shift 2
+        ;;
+      --email)
+        EMAIL="${2:-}"
+        shift 2
+        ;;
+      --name)
+        PERSON_NAME="${2:-}"
+        shift 2
+        ;;
+      --key-type)
+        KEY_TYPE="${2:-}"
+        shift 2
+        ;;
+      --key-name)
+        KEY_NAME="${2:-}"
+        shift 2
+        ;;
+      --custom-host)
+        CUSTOM_HOST="${2:-}"
+        shift 2
+        ;;
+      --custom-port)
+        CUSTOM_PORT="${2:-}"
+        shift 2
+        ;;
+      --force)
+        FORCE=1
+        shift
+        ;;
+      --dry-run)
+        DRY_RUN=1
+        shift
+        ;;
+      --copy-to-clipboard)
+        COPY_TO_CLIPBOARD=1
+        shift
+        ;;
+      --print-public-key)
+        PRINT_PUBLIC_KEY=1
+        shift
+        ;;
+      --no-color)
+        COLOR=0
+        shift
+        ;;
+      --no-agent)
+        START_AGENT=0
+        shift
+        ;;
+      --)
+        shift
+        break
+        ;;
+      *)
+        err "Unknown argument: $1"
+        usage
+        exit 2
+        ;;
     esac
   done
 }
@@ -227,7 +307,7 @@ ensure_ssh_dir() {
   # reject dangerous permissions
   current_mode=$(stat -c '%a' "$SSH_DIR" 2>/dev/null || stat -f '%Mp%Lp' "$SSH_DIR")
   case "$current_mode" in
-    700|0700) ;;
+    700 | 0700) ;;
     *)
       warn "$SSH_DIR permissions were $current_mode; correcting to 700"
       chmod 700 "$SSH_DIR"
@@ -286,7 +366,8 @@ upsert_ssh_config() {
   local_port="$4"
   local_identity="$5"
 
-  block=$(cat <<EOF_BLOCK
+  block=$(
+    cat <<EOF_BLOCK
 Host ${local_host}
     HostName ${local_name}
     User ${local_user}
@@ -294,7 +375,7 @@ Host ${local_host}
     IdentityFile ${local_identity}
     IdentitiesOnly yes
 EOF_BLOCK
-)
+  )
 
   if [ "$DRY_RUN" -eq 1 ]; then
     log "[dry-run] append/update host block in '$SSH_CONFIG' for Host ${local_host}"
@@ -390,8 +471,16 @@ copy_public_key() {
 main() {
   parse_args "$@"
 
-  [ -n "$PROVIDER" ] || { err "--provider is required"; usage; exit 2; }
-  [ -n "$EMAIL" ] || { err "--email is required"; usage; exit 2; }
+  [ -n "$PROVIDER" ] || {
+    err "--provider is required"
+    usage
+    exit 2
+  }
+  [ -n "$EMAIL" ] || {
+    err "--email is required"
+    usage
+    exit 2
+  }
 
   validate_provider "$PROVIDER"
   validate_email "$EMAIL"
@@ -408,8 +497,14 @@ main() {
     validate_person_name "$PERSON_NAME"
     NAME_FOR_KEY="$(normalize_name_for_key "$PERSON_NAME")"
     NAME_FOR_ALIAS="$(normalize_name_for_alias "$PERSON_NAME")"
-    [ -n "$NAME_FOR_KEY" ] || { err "Name cannot be normalized into a valid key name"; exit 1; }
-    [ -n "$NAME_FOR_ALIAS" ] || { err "Name cannot be normalized into a valid host alias"; exit 1; }
+    [ -n "$NAME_FOR_KEY" ] || {
+      err "Name cannot be normalized into a valid key name"
+      exit 1
+    }
+    [ -n "$NAME_FOR_ALIAS" ] || {
+      err "Name cannot be normalized into a valid host alias"
+      exit 1
+    }
   fi
 
   if [ -z "$KEY_NAME" ]; then

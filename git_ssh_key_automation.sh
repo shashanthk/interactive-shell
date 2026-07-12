@@ -6,7 +6,7 @@ set -euo pipefail
 
 REMOTE_BASE_URL="https://raw.githubusercontent.com/shashanthk/interactive-shell/main"
 TARGET_NAME="generate-ssh-key.sh"
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd || true)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd)" || SCRIPT_DIR=""
 TARGET_SCRIPT="${SCRIPT_DIR}/${TARGET_NAME}"
 
 usage_wrapper() {
