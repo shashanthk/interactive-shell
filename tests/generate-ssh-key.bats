@@ -96,6 +96,23 @@ setup() {
   [ "$status" -ne 0 ]
 }
 
+@test "copy to clipboard works on Windows Git Bash (MINGW)" {
+  cat >"$TEST_ROOT/bin/uname" <<'MOCK'
+#!/usr/bin/env bash
+echo "MINGW64_NT-10.0-19045"
+MOCK
+  chmod +x "$TEST_ROOT/bin/uname"
+
+  cat >"$TEST_ROOT/bin/clip.exe" <<'MOCK'
+#!/usr/bin/env bash
+cat >/dev/null
+MOCK
+  chmod +x "$TEST_ROOT/bin/clip.exe"
+
+  run "$BATS_TEST_DIRNAME/../generate-ssh-key.sh" --provider github --email user@example.com --copy-to-clipboard --no-color
+  [ "$status" -eq 0 ]
+}
+
 @test "missing required params fails" {
   run "$BATS_TEST_DIRNAME/../generate-ssh-key.sh" --provider github --no-color
   [ "$status" -ne 0 ]

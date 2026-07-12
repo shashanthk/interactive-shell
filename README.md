@@ -37,6 +37,7 @@ chmod +x generate-ssh-key.sh
   - Linux Wayland: `wl-copy`
   - Linux X11: `xclip`
   - WSL: `clip.exe`
+  - Windows (Git Bash / MSYS / Cygwin): `clip.exe` (built in to Windows)
 
 ## Usage
 ```bash
