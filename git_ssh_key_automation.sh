@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Backward-compatible entrypoint retained for older users.
-# Prefer using generate-ssh-key.sh directly.
+# Canonical entrypoint for remote (curl | bash) execution. Runs the
+# local generate-ssh-key.sh if this repo is checked out next to it,
+# otherwise downloads it. For a local clone, you can also just run
+# ./generate-ssh-key.sh directly.
 
 REMOTE_BASE_URL="https://raw.githubusercontent.com/shashanthk/interactive-shell/main"
 TARGET_NAME="generate-ssh-key.sh"
@@ -11,9 +13,8 @@ TARGET_SCRIPT="${SCRIPT_DIR}/${TARGET_NAME}"
 
 usage_wrapper() {
   cat >&2 <<'USAGE'
-This wrapper is deprecated.
-Use one of:
-  ./generate-ssh-key.sh --provider github --email you@example.com
+Usage:
+  ./git_ssh_key_automation.sh --provider github --email you@example.com
   curl -fsSL https://raw.githubusercontent.com/shashanthk/interactive-shell/main/git_ssh_key_automation.sh | bash -s -- --provider github --email you@example.com
 USAGE
 }

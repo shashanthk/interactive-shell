@@ -17,10 +17,10 @@ jobs:
           sudo apt-get install -y shellcheck shfmt bats openssh-client
 
       - name: Shellcheck
-        run: shellcheck generate-ssh-key.sh run_git_ssh_key_automation.sh git_ssh_key_automation.sh
+        run: shellcheck generate-ssh-key.sh git_ssh_key_automation.sh
 
       - name: shfmt check
-        run: shfmt -d generate-ssh-key.sh run_git_ssh_key_automation.sh git_ssh_key_automation.sh tests/*.bats tests/*.bash
+        run: shfmt -d generate-ssh-key.sh git_ssh_key_automation.sh tests/*.bats tests/*.bash
 
       - name: Bats tests
         run: bats tests/
